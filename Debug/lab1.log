@@ -1,3 +1,4 @@
 ﻿  Cvatrice.c
-D:\VS_projects\lab1\lab1\Cvatrice.c(149,57): warning C4133: 'function': incompatible types - from 'char [40]' to 'LPCWSTR'
+D:\VS_projects\lab1\lab1\Cvatrice.c(91,18): warning C4305: 'function': truncation from 'double' to 'GLfloat'
+D:\VS_projects\lab1\lab1\Cvatrice.c(120,52): warning C4133: 'function': incompatible types - from 'char [35]' to 'LPCWSTR'
   lab1.vcxproj -> D:\VS_projects\lab1\Debug\lab1.exe
