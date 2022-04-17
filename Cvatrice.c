@@ -1,104 +1,173 @@
-﻿/*
- *  planet.c
- *  Programul arata cum se compun transformarile de rotatie si de translatie
- *  pentru desenarea obiectelor rotite sau translatate.
- *  Interactiune:  left, right, up, down
- *
- */
-#include "glos.h"
+﻿#include "glos.h"
 
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <GL/glut.h>
 #include <GL/glaux.h>
+#include <math.h>
 
 void myinit(void);
-void drawPlane(void);
-void CALLBACK dayAdd(void);
-void CALLBACK daySubtract(void);
-void CALLBACK yearAdd(void);
-void CALLBACK yearSubtract(void);
 void CALLBACK display(void);
-void CALLBACK moonAdd(void);
-void CALLBACK moonSubtract(void);
-void CALLBACK moonOrbitAdd(void);
-void CALLBACK moonOrbitSubtract(void);
 void CALLBACK myReshape(GLsizei w, GLsizei h);
+void CALLBACK MutaStanga(void);
+void CALLBACK MutaDreapta(void);
+void CALLBACK MutaSus(void);
+void CALLBACK MutaJos(void);
+void CALLBACK rot_z_up(AUX_EVENTREC* event);
+void CALLBACK rot_z_down(AUX_EVENTREC* event);
 
-static int year = 0, day = 0, tidalLock = 0, moonDay = 0;
 
-void CALLBACK dayAdd(void)
-{
-	day = (day + 10) % 360;
+static GLfloat x = 0, y = 0, alfa = 0;
+GLUquadricObj* qobj;
+GLUnurbsObj* theNurb;
+
+void myinit(void) {
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glShadeModel(GL_FLAT);
+	theNurb = gluNewNurbsRenderer();
+	gluNurbsProperty(theNurb, GLU_SAMPLING_TOLERANCE, 10.0);
 }
 
-void CALLBACK daySubtract(void)
+void CALLBACK MutaStanga(void)
 {
-	day = (day - 10) % 360;
+	x = x - 10;
 }
 
-void CALLBACK yearAdd(void)
+void CALLBACK MutaDreapta(void)
 {
-	year = (year + 5) % 360;
-	day = (day + 2) % 360;
-	tidalLock = (tidalLock - 4) % 360;
-	moonDay = (moonDay + 4) % 360;
+	x = x + 10;
 }
 
-void CALLBACK yearSubtract(void)
+void CALLBACK MutaSus(void)
 {
-	year = (year - 5) % 360;
+	y = y + 10;
 }
 
-void CALLBACK moonAdd(void)
+void CALLBACK MutaJos(void)
 {
-	tidalLock = (tidalLock + 5) % 360;
+	y = y - 10;
 }
 
-void CALLBACK moonSubtract(void)
+void CALLBACK rot_z_up(AUX_EVENTREC* event)
 {
-	tidalLock = (tidalLock - 5) % 360;
+	alfa = alfa + 10;
 }
 
-void CALLBACK moonOrbitAdd(void)
+void CALLBACK rot_z_down(AUX_EVENTREC* event)
 {
-	moonDay = (moonDay + 1) % 360;
+	alfa = alfa - 10;
 }
-
-void CALLBACK moonOrbitSubtract(void)
-{
-	moonDay = (moonDay - 1) % 360;
-}
-
 
 void CALLBACK display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glColor3f(1.0, 1.0, 1.0);
-	glPushMatrix();//pentru a nu iesi obiectele din fereastra la reapelarea functiei display()
+	glLoadIdentity();
 
-	/*  SOARELE    */
-	auxWireSphere(1.0);
+	qobj = gluNewQuadric();
+	glRotatef(alfa, 0, 1, 0);
 
-	/*  Pamantul */
-	glRotatef((GLfloat)year, 0.0, 1.0, 0.0);
-	glTranslatef(2.0, 0.0, 0.0);
-	glRotatef((GLfloat)day, 0.0, 1.0, 0.0);
-	auxWireSphere(0.2);
+	// TRACTOR START: doua discuri, cateva dreptunghiuri
 
-	/* Luna */
-	glRotatef((GLfloat)((year + tidalLock) % 360), 0.0, 1.0, 0.0);
-	glTranslatef(0.8, 0.0, 0.0);
-	glRotatef((GLfloat)((day + moonDay) % 360), 0.0, 1.0, 0.0);
-	auxWireSphere(0.08);
-
+	// corp principal (orizontal (dreapta))
+	glPushMatrix();
+	gluQuadricDrawStyle(qobj, GLU_LINE);
+	glTranslatef(x + 10, y + 80, 0);
+	glRotatef(90, 1, 0, 0);
+	glColor3f(0.6, 0, 0);
+	gluCylinder(qobj, 20, 20, 40, 4, 100);
 	glPopMatrix();
+
+	// corp principal (orizontal (stanga))
+	glPushMatrix();
+	gluQuadricDrawStyle(qobj, GLU_LINE);
+	glTranslatef(x -30, y + 80, 0);
+	glRotatef(90, 1, 0, 0);
+	glColor3f(0.6, 0, 0);
+	gluCylinder(qobj, 20, 20, 40, 4, 100);
+	glPopMatrix();	
+
+	// cabina (vertical)
+	glPushMatrix();
+	gluQuadricDrawStyle(qobj, GLU_LINE);
+	glTranslatef(x + 50, y + 110, 0);
+	glRotatef(90, 1, 0, 0);
+	glColor3f(0, 0, 0.5);
+	gluCylinder(qobj, 20, 20, 70, 4, 250);
+	glPopMatrix();
+
+	// esapament
+	glPushMatrix();
+	gluQuadricDrawStyle(qobj, GLU_LINE);
+	glTranslatef(x - 30, y + 98, 0);
+	glRotatef(90, 1, 0, 0);
+	glColor3f(0.3, 0.05, 0);
+	gluCylinder(qobj, 5, 5, 18, 4, 60);
+	glPopMatrix();
+
+	// roata spate-dreapta
+	glPushMatrix();
+	gluQuadricDrawStyle(qobj, GLU_LINE);
+	glTranslatef(x + 50, y + 28, 26);
+	glColor3f(0.3,0, 0.4);
+	glutSolidTorus(10, 30, 80, 80);
+	glPopMatrix();
+
+	// roata spate-stanga
+	glPushMatrix();
+	gluQuadricDrawStyle(qobj, GLU_LINE);
+	glTranslatef(x + 50, y + 28, -26);
+	glColor3f(0.2, 0, 0.3);
+	glutSolidTorus(10, 30, 80, 80);
+	glPopMatrix();
+
+	//roata fata-stanga
+	glPushMatrix();
+	gluQuadricDrawStyle(qobj, GLU_LINE);
+	glTranslatef(x - 40, y + 20, -20);
+	glColor3f(0, 0.25, 0.2);
+	glutSolidTorus(7, 20, 50, 50);
+	glPopMatrix();
+
+	//roata fata-dreapta
+	glPushMatrix();
+	gluQuadricDrawStyle(qobj, GLU_LINE);
+	glTranslatef(x - 40, y + 20, 20);
+	glColor3f(0, 0.2, 0.15);
+	glutSolidTorus(7, 20, 50, 50);
+	glPopMatrix();
+
+
+	auxSwapBuffers();
+
+	GLfloat ctlpoints[4][3] = { {-.75, -.75, 0.0},
+	{-.5, .75, 0.0}, {.5, .75, 0.0}, {.75, -.75, 0.0} };
+	GLfloat knots[8] = { 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0 };
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(1.0, 1.0, 1.0); // culoarea curenta de desenare
+	// incepe corpul de redare al curbei Spline
+	gluBeginCurve(theNurb);
+	gluNurbsCurve(theNurb,	// pointer obiect NURBS
+		8, knots,			//numar noduri, tablou noduri
+		3,					// intervalul de valori dintre doua puncte de control consecutive
+		&ctlpoints[0][0],	// vector puncte de control
+		4,					// ordinul curbei 
+		GL_MAP1_VERTEX_3);	// tip evaluator
+	gluEndCurve(theNurb);
+
 	glFlush();
 }
 
-void myinit(void) {
-	glShadeModel(GL_FLAT);
-}
+/*void CALLBACK myReshape(GLsizei w, GLsizei h)
+{
+if (!h) return;			//transformare anizotropica, forma se modifica functie de forma(dimens) viewportului
+glViewport(0, 0, w, h);	//daca w>h stabilim ca baza inaltime, si stab unit logica de dimens in fct de h(h/320, 320 lungime lat patrat)
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+glOrtho (-160.0, 160.0, -160.0,
+160.0, -10.0, 10.0);
+glMatrixMode(GL_MODELVIEW);
+}*/
 
 void CALLBACK myReshape(GLsizei w, GLsizei h)
 {
@@ -106,28 +175,29 @@ void CALLBACK myReshape(GLsizei w, GLsizei h)
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0, (GLfloat)w / (GLfloat)h, 1.0, 20.0);
+	if (w <= h)
+		glOrtho(-160.0, 160.0, 160.0 * (GLfloat)h / (GLfloat)w,
+			-160.0 * (GLfloat)h / (GLfloat)w, -100.0, 100.0);
+	else
+		glOrtho(-160.0 * (GLfloat)w / (GLfloat)h,
+			160.0 * (GLfloat)w / (GLfloat)h, -160.0, 160.0, -100.0, 100.0);
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -5.0);
 }
-
 
 int main(int argc, char** argv)
 {
-	auxInitDisplayMode(AUX_SINGLE | AUX_RGB);
-	auxInitPosition(0, 0, 500, 500);
-	auxInitWindow("Composite Modeling Transformations");
+	auxInitDisplayMode(AUX_DOUBLE | AUX_RGB | AUX_DEPTH);
+	auxInitPosition(0, 0, 1000, 800);
+	auxInitWindow("Un patrat care se translateaza pe axa x");
 	myinit();
-	auxKeyFunc(AUX_LEFT, yearSubtract);
-	auxKeyFunc(AUX_RIGHT, yearAdd);
-	auxKeyFunc(AUX_UP, dayAdd);
-	auxKeyFunc(AUX_DOWN, daySubtract);
 
-	auxKeyFunc(AUX_w, moonAdd);
-	auxKeyFunc(AUX_s, moonSubtract);
-	auxKeyFunc(AUX_a, moonOrbitSubtract);
-	auxKeyFunc(AUX_d, moonOrbitAdd);
+	auxKeyFunc(AUX_LEFT, MutaStanga);
+	auxKeyFunc(AUX_RIGHT, MutaDreapta);
+	auxKeyFunc(AUX_UP, MutaSus);
+	auxKeyFunc(AUX_DOWN, MutaJos);
+	auxMouseFunc(AUX_LEFTBUTTON, AUX_MOUSEDOWN, rot_z_up);
+	auxMouseFunc(AUX_RIGHTBUTTON, AUX_MOUSEDOWN, rot_z_down);
+
 
 	auxReshapeFunc(myReshape);
 	auxMainLoop(display);
